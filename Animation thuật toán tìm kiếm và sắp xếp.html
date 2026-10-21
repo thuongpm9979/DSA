@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Animation thuật toán tìm kiếm và sắp xếp</title>
+<style>
+:root{color-scheme:light;--bg:#f6f3ea;--fg:#14213d;--mut:#5f594c;--card:#fffdf7;--bd:#ddd6c5;--bar:#94a3b8;--c:#f59e0b;--s:#dc2626;--d:#16a34a;--p:#7c3aed;--r:#3b82f6;--ac:#c2410c;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0f1729;--fg:#f1ece0;--mut:#b5ae9e;--card:#1a2540;--bd:#33415f;--bar:#64748b;--ac:#fb923c}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0f1729;--fg:#f1ece0;--mut:#b5ae9e;--card:#1a2540;--bd:#33415f;--bar:#64748b;--ac:#fb923c}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,Arial,sans-serif}
+main{max-width:960px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:26px;margin:0 0 4px}
+p.sub{margin:0 0 16px;color:var(--mut)}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+button,input{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:8px 12px}
+button{cursor:pointer}
+.tabs button.on{background:var(--ac);border-color:var(--ac);color:#fff8ee}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:12px}
+#bars{height:280px;display:flex;align-items:flex-end;gap:6px;padding-top:30px}
+.b{flex:1;max-width:72px;background:var(--bar);border-radius:6px 6px 0 0;position:relative;transition:height .15s}
+.b span{position:absolute;top:-24px;left:0;right:0;text-align:center;font-size:15px;font-weight:600}
+.b.c{background:var(--c)}.b.s{background:var(--s)}.b.d,.b.f{background:var(--d)}.b.p{background:var(--p)}.b.r{background:var(--r)}.b.x{opacity:.25}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.row label{color:var(--mut)}
+input[type=text]{flex:1;min-width:180px}
+input[type=number]{width:80px}
+#msg{font-weight:600;min-height:48px;margin:0}
+#ex{color:var(--mut);font-family:'Courier New',monospace;min-height:24px;margin:4px 0 0;overflow-x:auto}
+.lg{display:flex;flex-wrap:wrap;gap:14px;font-size:14px;color:var(--mut)}
+.lg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+</style></head>
+<body><main>
+<h1>Animation thuật toán</h1>
+<p class="sub">Chọn thuật toán, nhập mảng của bạn, rồi bấm Chạy hoặc đi từng bước.</p>
+<div class="tabs" id="tabs"></div>
+<div class="card">
+<div class="row" style="margin-bottom:12px">
+<input type="text" id="arr" value="5, 3, 8, 1, 4, 9, 2, 7" aria-label="Mảng">
+<span id="tw"><label>Tìm </label><input type="number" id="tg" value="9"></span>
+<button id="ap">Áp dụng</button>
+</div>
+<div id="bars"></div>
+</div>
+<div class="card">
+<p id="msg"></p><p id="ex"></p>
+<div class="row" style="margin-top:12px">
+<button id="b0">Đầu</button><button id="b1">Lùi</button><button id="bp">Chạy</button><button id="b2">Tiến</button>
+<label>Tốc độ <input type="range" id="sp" min="1" max="10" value="5"></label>
+<span id="st" style="color:var(--mut)"></span>
+</div></div>
+<div class="lg"><span><i style="background:var(--c)"></i>Đang so sánh</span><span><i style="background:var(--s)"></i>Đổi chỗ / ghi</span><span><i style="background:var(--p)"></i>Chốt / phần tử đang xét</span><span><i style="background:var(--r)"></i>Đoạn đang xét</span><span><i style="background:var(--d)"></i>Đã đúng vị trí / tìm thấy</span></div>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+const N={lin:'Linear Search',bin:'Binary Search',bub:'Bubble Sort',sel:'Selection Sort',ins:'Insertion Sort',qui:'Quick Sort',mer:'Merge Sort',cou:'Counting Sort',rad:'Radix Sort'};
+let K='bub',F=[],pos=0,tm=null;
+function gen(k,arr,t){
+ let a=arr.slice(),F=[],D={};const n=a.length;
+ const rec=(m,t2,x)=>F.push({a:a.slice(),m:{...D,...m},t:t2,x:x||''});
+ const sw=(i,j)=>{[a[i],a[j]]=[a[j],a[i]]};
+ let fin=true;
+ if(k==='lin'){fin=false;
+  for(let i=0;i<n;i++){rec({[i]:'c'},`So sánh a[${i}] = ${a[i]} với ${t}`);
+   if(a[i]===t){rec({[i]:'f'},`Tìm thấy ${t} tại chỉ số ${i}`);return F}}
+  rec({},`Không tìm thấy ${t}, trả về -1`);}
+ else if(k==='bin'){fin=false;a.sort((x,y)=>x-y);let l=0,r=n-1;
+  rec({},'Binary Search cần mảng đã sắp xếp, nên mảng được sắp xếp trước');
+  while(l<=r){const mid=(l+r)>>1,m={};
+   for(let i=0;i<n;i++)m[i]=(i<l||i>r)?'x':'r';m[mid]='c';
+   rec(m,`left = ${l}, right = ${r}, mid = ${mid}: so sánh ${a[mid]} với ${t}`);
+   if(a[mid]===t){m[mid]='f';rec(m,`Tìm thấy ${t} tại chỉ số ${mid}`);return F}
+   if(a[mid]<t){l=mid+1;rec({...m,[mid]:'x'},`${a[mid]} nhỏ hơn ${t}: tìm nửa bên phải`)}
+   else{r=mid-1;rec({...m,[mid]:'x'},`${a[mid]} lớn hơn ${t}: tìm nửa bên trái`)}}
+  rec({},`Không tìm thấy ${t}, trả về -1`);}
+ else if(k==='bub'){
+  for(let i=0;i<n-1;i++){for(let j=0;j<n-i-1;j++){
+    rec({[j]:'c',[j+1]:'c'},`So sánh ${a[j]} và ${a[j+1]}`);
+    if(a[j]>a[j+1]){sw(j,j+1);rec({[j]:'s',[j+1]:'s'},'Sai thứ tự, đổi chỗ')}}
+   D[n-i-1]='d'}}
+ else if(k==='sel'){
+  for(let i=0;i<n-1;i++){let m=i;
+   for(let j=i+1;j<n;j++){rec({[m]:'p',[j]:'c'},`Tìm nhỏ nhất: so sánh ${a[j]} với ${a[m]}`);if(a[j]<a[m])m=j}
+   if(m!==i){sw(i,m);rec({[i]:'s',[m]:'s'},`Đổi chỗ phần tử nhỏ nhất ${a[i]} về vị trí ${i}`)}
+   D[i]='d'}}
+ else if(k==='ins'){D[0]='d';
+  for(let i=1;i<n;i++){let j=i-1;rec({[i]:'p'},`Chèn ${a[i]} vào phần đã sắp xếp bên trái`);
+   while(j>=0&&a[j]>a[j+1]){rec({[j]:'c',[j+1]:'c'},`${a[j]} lớn hơn ${a[j+1]}: đổi chỗ`);sw(j,j+1);rec({[j]:'s',[j+1]:'s'},'Dịch sang trái');j--}
+   if(j>=0)rec({[j]:'c',[j+1]:'c'},`${a[j]} không lớn hơn ${a[j+1]}: dừng`);
+   D[i]='d'}}
+ else if(k==='qui'){
+  const qs=(lo,hi)=>{if(lo>hi)return;if(lo===hi){D[lo]='d';return}
+   const pv=a[hi];let i=lo;rec({[hi]:'p'},`Chọn chốt ${pv} (phần tử cuối đoạn ${lo}..${hi})`);
+   for(let j=lo;j<hi;j++){rec({[hi]:'p',[j]:'c'},`So sánh ${a[j]} với chốt ${pv}`);
+    if(a[j]<pv){if(i!==j){sw(i,j);rec({[hi]:'p',[i]:'s',[j]:'s'},`${a[i]} nhỏ hơn chốt: đưa sang nhóm trái`)}i++}}
+   sw(i,hi);D[i]='d';rec({[i]:'s'},`Đặt chốt ${pv} vào đúng vị trí ${i}`);
+   qs(lo,i-1);qs(i+1,hi)};
+  qs(0,n-1);}
+ else if(k==='mer'){
+  const ms=(lo,hi)=>{if(lo>=hi)return;const mid=(lo+hi)>>1;ms(lo,mid);ms(mid+1,hi);
+   const L=a.slice(lo,mid+1),R=a.slice(mid+1,hi+1);let i=0,j=0,q=lo;const rg={};
+   for(let z=lo;z<=hi;z++)rg[z]='r';
+   while(i<L.length||j<R.length){let v;
+    if(j>=R.length||(i<L.length&&L[i]<=R[j]))v=L[i++];else v=R[j++];
+    a[q]=v;rec({...rg,[q]:'s'},`Trộn đoạn ${lo}..${hi}: ghi ${v} vào vị trí ${q}`);q++}};
+  ms(0,n-1);}
+ else if(k==='cou'){
+  const mx=Math.max(...a),cnt=Array(mx+1).fill(0);
+  for(let i=0;i<n;i++){cnt[a[i]]++;rec({[i]:'c'},`Đếm giá trị ${a[i]}`,'cnt = ['+cnt+']')}
+  const src=a.slice();a=a.map(()=>0);let q=0;
+  rec({},'Ghi lại mảng theo số lần đếm (mảng kết quả ban đầu trống)','cnt = ['+cnt+']');
+  for(let v=0;v<=mx;v++)for(let c=0;c<cnt[v];c++){a[q]=v;rec({[q]:'s'},`Ghi ${v} vào vị trí ${q}`,'cnt = ['+cnt+']');q++}}
+ else if(k==='rad'){
+  const mx=Math.max(...a),nm={1:'đơn vị',10:'chục',100:'trăm',1000:'nghìn'};
+  for(let e=1;Math.floor(mx/e)>0;e*=10){const B=Array.from({length:10},()=>[]);
+   a.forEach((x,i)=>{const d=Math.floor(x/e)%10;B[d].push(x);
+    rec({[i]:'c'},`${x}: chữ số hàng ${nm[e]||e} là ${d}, vào thùng ${d}`,B.map((b,z)=>b.length?z+':['+b+']':'').filter(Boolean).join('  '))});
+   a=B.flat();rec({},`Gộp các thùng theo thứ tự 0 đến 9: xong lượt hàng ${nm[e]||e}`)}}
+ if(fin){const m={};for(let i=0;i<n;i++)m[i]='d';D={};rec(m,'Hoàn tất: mảng đã sắp xếp')}
+ return F}
+function parse(){let v=$('#arr').value.split(/[\s,;]+/).map(Number).filter(x=>Number.isInteger(x)&&x>=0&&x<=999).slice(0,14);
+ if(v.length<2)v=[5,3,8,1,4,9,2,7];$('#arr').value=v.join(', ');return v}
+function build(){stop();F=gen(K,parse(),parseInt($('#tg').value));pos=0;draw()}
+function draw(){const f=F[pos],mx=Math.max(...f.a,1);
+ $('#bars').innerHTML=f.a.map((v,i)=>`<div class="b ${f.m[i]||''}" style="height:${Math.max(v/mx*100,2)}%"><span>${v}</span></div>`).join('');
+ $('#msg').textContent=f.t;$('#ex').textContent=f.x;$('#st').textContent=`Bước ${pos+1} / ${F.length}`;
+ $('#tw').style.display=(K==='lin'||K==='bin')?'':'none'}
+function stop(){clearInterval(tm);tm=null;$('#bp').textContent='Chạy'}
+function play(){if(tm){stop();return}if(pos>=F.length-1)pos=0;$('#bp').textContent='Dừng';
+ tm=setInterval(()=>{if(pos<F.length-1){pos++;draw()}else stop()},1500/$('#sp').value)}
+function pick(k){K=k;document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.k===k));
+ const lin=(k==='lin'||k==='bin');if(lin&&$('#arr').value.split(',').length<2)$('#arr').value='5, 3, 8, 1, 4, 9, 2, 7';build()}
+$('#tabs').innerHTML=Object.entries(N).map(([k,v])=>`<button data-k="${k}">${v}</button>`).join('');
+$('#tabs').onclick=e=>{const k=e.target.dataset.k;if(k){history.replaceState(null,'','#'+k);pick(k)}};
+$('#ap').onclick=build;$('#bp').onclick=play;
+$('#b0').onclick=()=>{stop();pos=0;draw()};
+$('#b1').onclick=()=>{stop();if(pos>0)pos--;draw()};
+$('#b2').onclick=()=>{stop();if(pos<F.length-1)pos++;draw()};
+$('#sp').oninput=()=>{if(tm){stop();play()}};
+addEventListener('hashchange',()=>{const k=location.hash.slice(1);if(N[k])pick(k)});
+pick(N[location.hash.slice(1)]?location.hash.slice(1):'bub');
+</script></body></html>
